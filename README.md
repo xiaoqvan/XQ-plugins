@@ -18,4 +18,4 @@ git clone https://github.com/xiaoqvan/xq-plugins.git plugins
 ```
 
 ## 配置
-首次使用音乐解析后会在 `163Music` 目录下生成一个 `163cookie.yaml` 文件，在 `MUSIC_U` 中填入你的cookie，然后重启bot。
+首次使用音乐解析后会在 `163Music\api` 目录下生成一个 `163cookie.yaml` 文件，在 `MUSIC_U` 中填入你的cookie，然后重启bot。
