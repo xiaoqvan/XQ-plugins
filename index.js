@@ -1,5 +1,5 @@
 import music from "./163Music/163music.js";
-import douyin from "./douyin/douyin.js";
+import { douyin, kuaishou } from "./video/video.js";
 import log from "#logger";
 import { NewMessage } from "telegram/events/index.js";
 
@@ -18,10 +18,14 @@ export default async function (client) {
       if (username && username.toLowerCase() !== me.username.toLowerCase()) {
         return;
       }
-      if (cmd === "/music") {
-        await music(client, event);
-      } else if (cmd === "/douyin") {
-        await douyin(client, event);
+      const commands = {
+        "/music": music,
+        "/douyin": douyin,
+        "/kuaishou": kuaishou,
+      };
+
+      if (commands[cmd]) {
+        await commands[cmd](client, event);
       }
     } catch (error) {
       log.error(`[XQ-plugins]插件处理消息时出错: ${error}`);
