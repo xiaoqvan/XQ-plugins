@@ -1,6 +1,6 @@
 # XQ Plugins
 
-欢迎使用 xiaoqvan 的插件库！这个项目是 [cat-acg bot](https://github.com/moecatacg/cat-acg) (Telegram BOT)的插件库
+欢迎使用 xiaoqvan 的bot插件！这个项目是 [cat-acg bot](https://github.com/moecatacg/cat-acg) (Telegram BOT)的插件
 
 ## 功能
 
