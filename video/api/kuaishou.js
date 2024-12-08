@@ -12,7 +12,6 @@ async function parseVideoId(shareLink) {
       headers: {
         "User-Agent": userAgent.toString(),
       },
-      maxRedirects: 5, // 设置最大重定向次数
     });
 
     redirectedUrl = videoInfo.request.res.responseUrl;
@@ -23,6 +22,7 @@ async function parseVideoId(shareLink) {
       break;
     }
   } while (true);
+  // console.log(videoInfo.data);
 
   return videoInfo.data;
 }
@@ -64,7 +64,6 @@ function extractVideoInfo(html) {
       };
       return photoinfo;
     } else {
-      console.log(`视频`);
       const adaptationSet = photoData?.manifest?.adaptationSet;
       if (adaptationSet[0].representation) {
         const representations = adaptationSet[0].representation;
@@ -80,8 +79,8 @@ function extractVideoInfo(html) {
 
         const videoInfo = {
           title: caption,
-          url: url,
-          backupUrl: backupUrl,
+          url: selectedRepresentation.url,
+          backupUrl: selectedRepresentation.backupUrl,
           fileSize: selectedRepresentation.fileSize,
           videoCodec: selectedRepresentation.videoCodec,
           author: {
@@ -89,6 +88,7 @@ function extractVideoInfo(html) {
             name: userName,
           },
         };
+
         return videoInfo;
       }
     }
@@ -100,7 +100,7 @@ function extractVideoInfo(html) {
 }
 
 const isValidKuaishouUrl = (url) => {
-  const pattern = /^https?:\/\/(?:v\.)?kuaishou\.com\/.+$/;
+  const pattern = /^https?:\/\/(?:v\.|www\.)?kuaishou\.com\/.+$/;
   return pattern.test(url);
 };
 
@@ -108,6 +108,7 @@ const Kuaishou = async (url) => {
   if (!isValidKuaishouUrl(url)) {
     throw new Error("无效的快手分享链接");
   }
+
   try {
     const videoData = await parseVideoId(url);
     const videoInfo = extractVideoInfo(videoData);
