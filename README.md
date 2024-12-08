@@ -6,7 +6,7 @@
 
 - **/music**：163音乐解析
 - **/douyin**：抖音视频解析
-- **/kuaisou**：快手视频解析
+- **/kuashou**：快手视频解析
 - 更多功能等待开发
 ## 安装
 
@@ -15,7 +15,7 @@
 进入bot的根目录，执行以下命令来安装本插件
 
 ```
-git clone https://github.com/xiaoqvan/xq-plugins.git plugins
+git clone https://github.com/xiaoqvan/xq-plugins.git ./plugins/XQ-plugins
 ```
 
 ## 配置
