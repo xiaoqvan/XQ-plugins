@@ -3,7 +3,6 @@ import fetch from "node-fetch";
 import fs from "fs";
 import { join, extname } from "path";
 import { genImage, deleteImage } from "#puppeteer";
-import log from "#logger";
 import path from "path";
 import { fileURLToPath } from "url";
 import { Api } from "telegram";
@@ -17,7 +16,15 @@ const ensureDirectoryExists = (dir) => {
     fs.mkdirSync(dir, { recursive: true });
   }
 };
-
+const qualityMap = {
+  standard: "标准音质",
+  exhigh: "极高音质",
+  lossless: "无损音质",
+  hires: "Hires音质",
+  sky: "沉浸环绕声",
+  jyeffect: "高清环绕声",
+  jymaster: "超清母带",
+};
 const searchhtml = fs.readFileSync(
   path.join(__dirname, "./html/163search.html"),
   "utf8"
@@ -25,7 +32,6 @@ const searchhtml = fs.readFileSync(
 
 export default async function music(client, event) {
   const message = event.message;
-  const searchkey = message.message.split(" ")[1];
   const command = message.message.split(" ");
 
   if (command[0].startsWith("/music")) {
@@ -66,6 +72,7 @@ export default async function music(client, event) {
           message: getmsg.id,
           text: "获取歌曲信息失败。",
         });
+        throw error;
       }
       try {
         ensureDirectoryExists(downloadDir);
@@ -76,10 +83,10 @@ export default async function music(client, event) {
           const buffer = Buffer.from(arrayBuffer);
           const fileExtension = extname(songInfo.url).split("?")[0];
           const sanitizedFileName = `${songInfo.name.replace(
-            /[\/\\:*?"<>|]/g,
+            /[/\\:*?"<>|]/g,
             ""
           )} - ${songInfo.artists.replace(
-            /[\/\\:*?"<>|]/g,
+            /[/\\:*?"<>|]/g,
             ""
           )}${fileExtension}`;
           const filePath = join(downloadDir, sanitizedFileName);
@@ -92,7 +99,7 @@ export default async function music(client, event) {
             const coverBuffer = Buffer.from(coverArrayBuffer);
             const coverPath = join(
               downloadDir,
-              `${songInfo.name.replace(/[\/\\:*?"<>|]/g, "")}-cover.jpg`
+              `${songInfo.name.replace(/[/\\:*?"<>|]/g, "")}-cover.jpg`
             );
             fs.writeFileSync(coverPath, coverBuffer);
 
@@ -102,30 +109,33 @@ export default async function music(client, event) {
             });
 
             try {
+              const qualityText = qualityMap[songInfo.level] || songInfo.level;
+              const test = `${songInfo.name} - ${
+                songInfo.artists
+              }\n音质: ${qualityText}\n大小: ${(
+                buffer.length /
+                1024 /
+                1024
+              ).toFixed(2)} MB`;
+              const commonMessageOptions = {
+                file: filePath,
+                thumb: coverPath,
+                message: test,
+                attributes: [
+                  new Api.DocumentAttributeAudio({
+                    title: songInfo.name,
+                    performer: songInfo.artists,
+                    voice: false,
+                    duration: songInfo.time / 1000,
+                  }),
+                ],
+              };
               if (message.peerId?.className === "PeerUser") {
-                await client.sendMessage(getmsg.chatId, {
-                  file: filePath,
-                  thumb: coverPath,
-                  attributes: [
-                    new Api.DocumentAttributeAudio({
-                      title: songInfo.name,
-                      performer: songInfo.artists,
-                      voice: false,
-                    }),
-                  ],
-                });
+                await client.sendMessage(getmsg.chatId, commonMessageOptions);
               } else {
                 await client.sendMessage(getmsg.chatId, {
-                  file: filePath,
-                  thumb: coverPath,
+                  ...commonMessageOptions,
                   replyTo: message.id,
-                  attributes: [
-                    new Api.DocumentAttributeAudio({
-                      title: songInfo.name,
-                      performer: songInfo.artists,
-                      voice: false,
-                    }),
-                  ],
                 });
               }
 
@@ -136,28 +146,20 @@ export default async function music(client, event) {
               fs.unlinkSync(filePath);
               fs.unlinkSync(coverPath);
             } catch (uploadError) {
-              log.error(`无法上传歌曲文件: ${uploadError}`);
-              await client.editMessage(message.chatId, {
-                message: getmsg.id,
-                text: "无法上传歌曲文件，请稍后再试。",
-              });
+              throw new Error(`无法上传歌曲文件，请稍后再试。${uploadError}`);
             }
           } catch (coverDownloadError) {
-            log.error(`无法下载封面图片: ${coverDownloadError}`);
-            await client.editMessage(message.chatId, {
-              message: getmsg.id,
-              text: "无法下载封面图片，请稍后再试。",
-            });
+            throw new Error(`无法下载封面图片: ${coverDownloadError}`);
           }
         } catch (songDownloadError) {
-          log.error(`无法下载歌曲文件: ${songDownloadError}`);
           await client.editMessage(message.chatId, {
             message: getmsg.id,
             text: "无法下载歌曲文件，请检查你的id是否正确。",
           });
+          throw new Error(`无法下载歌曲文件。${songDownloadError}`);
         }
       } catch (error) {
-        log.error(`获取歌曲信息失败: ${error}`);
+        throw new Error(`获取歌曲信息失败。${error}`);
       }
     } else {
       let searchmsg;
@@ -231,6 +233,7 @@ export default async function music(client, event) {
           message: searchmsg.id,
           text: "生成图片失败。",
         });
+        throw error;
       }
       try {
         if (message.peerId?.className === "PeerUser") {
@@ -252,6 +255,7 @@ export default async function music(client, event) {
           message: searchmsg.id,
           text: "发送图片失败。",
         });
+        throw error;
       }
     }
   }

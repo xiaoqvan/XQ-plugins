@@ -148,6 +148,7 @@ const get163music = async (id, level) => {
     const result = {
       name: songDetails.name,
       picUrl: songDetails.al.picUrl,
+      id: songDetails.id,
       artists: songDetails.ar.map((artist) => artist.name).join("/"),
       album: songDetails.al.name,
       level: songLevel,

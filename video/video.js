@@ -95,7 +95,7 @@ export async function kuaishou(client, event) {
       });
     } catch (error) {
       await client.sendMessage(event.chatId, {
-        message: `消息发送失败: ${error.message}`,
+        message: `失败: ${error.message}`,
       });
     }
   }
