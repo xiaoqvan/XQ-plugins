@@ -1,6 +1,6 @@
 # XQ Plugins
 
-欢迎使用 xiaoqvan 的bot插件！这个项目是 [cat-acg bot](https://github.com/moecatacg/cat-acg) (Telegram BOT)的插件
+欢迎使用 xiaoqvan 的bot插件！这个项目是 [FuyuBot](https://github.com/CatMoeCircle/FuyuBot) (Telegram BOT)的插件
 
 ## 功能
 
@@ -10,7 +10,7 @@
 - 更多功能等待开发
 ## 安装
 
-确保已经克隆[cat-acg bot](https://github.com/moecatacg/cat-acg)
+确保已经克隆[FuyuBot](https://github.com/CatMoeCircle/FuyuBot)
 
 进入bot的根目录，执行以下命令来安装本插件
 
