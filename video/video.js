@@ -33,7 +33,7 @@ export async function douyin(client, event) {
       }
 
       const title = result.title.replace(/(?<!\s)#/g, " #");
-      const caption = `${title} \n\nBy <a href="https://www.douyin.com/user/${result.author.uid}">${result.author.name}</a>`;
+      const caption = `${title} \n\nBy <a href="https://www.douyin.com/user/${result.author.uid}">@${result.author.name}</a>`;
 
       await client.sendMessage(event.chatId, {
         file: result.video_url,
@@ -83,7 +83,7 @@ export async function kuaishou(client, event) {
       }
 
       const title = result.title.replace(/(?<!\s)#/g, " #");
-      const caption = `${title} \n\nBy <a href="https://www.kuaishou.com/profile/${result.author.uid}">${result.author.name}</a>`;
+      const caption = `${title} \n\nBy <a href="https://www.kuaishou.com/profile/${result.author.uid}">@${result.author.name}</a>`;
 
       await client.sendMessage(event.chatId, {
         file: result.url,
