@@ -99,12 +99,22 @@ async function getVideoInfo(videoId) {
       if (videoUrl) {
         videoMp4Url = await getFinalVideoUrl(videoUrl);
       }
-
+      if (videoMp4Url === "") {
+        return {
+          cover_url: data.video.cover.url_list[0],
+          title: data.desc,
+          images: images,
+          author: {
+            uid: data.author.sec_uid,
+            name: data.author.nickname,
+            avatar: data.author.avatar_thumb.url_list[0],
+          },
+        };
+      }
       return {
         video_url: videoMp4Url,
         cover_url: data.video.cover.url_list[0],
         title: data.desc,
-        images: images,
         author: {
           uid: data.author.sec_uid,
           name: data.author.nickname,

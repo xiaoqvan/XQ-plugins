@@ -1,13 +1,15 @@
 import axios from "axios";
 import UserAgent from "user-agents";
+import fs from "fs";
 
 const userAgent = new UserAgent();
 
 async function parseVideoId(shareLink) {
   let redirectedUrl = shareLink;
   let videoInfo;
+  let shouldContinue = true;
 
-  do {
+  while (shouldContinue) {
     videoInfo = await axios.get(redirectedUrl, {
       headers: {
         "User-Agent": userAgent.toString(),
@@ -19,9 +21,9 @@ async function parseVideoId(shareLink) {
     if (redirectedUrl.includes("/fw/long-video/")) {
       redirectedUrl = redirectedUrl.replace("/fw/long-video/", "/fw/photo/");
     } else {
-      break;
+      shouldContinue = false;
     }
-  } while (true);
+  }
   // console.log(videoInfo.data);
 
   return videoInfo.data;
@@ -55,8 +57,8 @@ function extractVideoInfo(html) {
 
       const photoinfo = {
         title: caption,
-        url: url,
-        backupUrl: backupUrl,
+        images: url,
+        img_backup: backupUrl,
         author: {
           uid: userEid,
           name: userName,
@@ -79,8 +81,8 @@ function extractVideoInfo(html) {
 
         const videoInfo = {
           title: caption,
-          url: selectedRepresentation.url,
-          backupUrl: selectedRepresentation.backupUrl,
+          video_url: selectedRepresentation.url,
+          backup_url: selectedRepresentation.backupUrl,
           fileSize: selectedRepresentation.fileSize,
           videoCodec: selectedRepresentation.videoCodec,
           author: {
@@ -95,7 +97,7 @@ function extractVideoInfo(html) {
 
     return null;
   } catch (error) {
-    throw error;
+    throw new Error(`${error.message}`);
   }
 }
 
@@ -111,6 +113,10 @@ const Kuaishou = async (url) => {
 
   try {
     const videoData = await parseVideoId(url);
+    fs.writeFile("file.html", videoData, "utf8", (err) => {
+      if (err) console.error("写入失败喵~", err);
+      else console.log("写入成功喵~(=^･ω･^=)");
+    });
     const videoInfo = extractVideoInfo(videoData);
     return videoInfo;
   } catch (error) {

@@ -23,17 +23,19 @@ export async function douyin(client, event) {
         message: "正在获取视频信息，请稍等...",
       });
       const result = await DouYin(url);
-
-      if (!result || !result.video_url) {
+      console.log(JSON.stringify(result, null, 2));
+      if (!result || !result.video_url === " ") {
         await client.editMessage(getmsg.chatId, {
           message: getmsg.id,
           text: "无法获取视频信息，请检查链接是否正确。",
         });
         return;
       }
-
+      const me = await client.getMe();
       const title = result.title.replace(/(?<!\s)#/g, " #");
-      const caption = `${title} \n\nBy <a href="https://www.douyin.com/user/${result.author.uid}">@${result.author.name}</a>`;
+      const caption = `${title} \n\nBy <a href="https://www.douyin.com/user/${
+        result.author.uid
+      }">@${result.author.name}</a> \nFrom @${me.username.toLowerCase()}`;
 
       await client.sendMessage(event.chatId, {
         file: result.video_url,
@@ -73,6 +75,7 @@ export async function kuaishou(client, event) {
         message: "正在获取视频信息，请稍等...",
       });
       const result = await Kuaishou(url);
+      console.log(JSON.stringify(result, null, 2));
 
       if (!result || !result.url) {
         await client.editMessage(getmsg.chatId, {
@@ -81,9 +84,12 @@ export async function kuaishou(client, event) {
         });
         return;
       }
+      const me = await client.getMe();
 
       const title = result.title.replace(/(?<!\s)#/g, " #");
-      const caption = `${title} \n\nBy <a href="https://www.kuaishou.com/profile/${result.author.uid}">@${result.author.name}</a>`;
+      const caption = `${title} \n\nBy <a href="https://www.kuaishou.com/profile/${
+        result.author.uid
+      }">@${result.author.name}</a> \nFrom @${me.username.toLowerCase()}`;
 
       await client.sendMessage(event.chatId, {
         file: result.url,
