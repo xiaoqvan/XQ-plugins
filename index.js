@@ -1,5 +1,5 @@
 import music from "./163Music/163music.js";
-import { douyin, kuaishou } from "./video/video.js";
+import { douyin, kuaishou, ppx } from "./video/video.js";
 import log from "#logger";
 import { eventupdate } from "../../core/api/event.js";
 
@@ -13,6 +13,7 @@ export default async function (client) {
         "/music": music,
         "/douyin": douyin,
         "/kuaishou": kuaishou,
+        "/ppx": ppx,
       };
 
       if (commands[cmd]) {

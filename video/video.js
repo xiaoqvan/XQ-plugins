@@ -1,5 +1,7 @@
 import DouYin from "./api/douyin.js";
 import Kuaishou from "./api/kuaishou.js";
+import pipix from "./api/ppx.js";
+import { Api } from "telegram";
 
 export async function douyin(client, event) {
   const msg = event.message;
@@ -23,7 +25,8 @@ export async function douyin(client, event) {
         message: "正在获取视频信息，请稍等...",
       });
       const result = await DouYin(url);
-      console.log(JSON.stringify(result, null, 2));
+      // console.log(result);
+
       if (!result || !result.video_url === " ") {
         await client.editMessage(getmsg.chatId, {
           message: getmsg.id,
@@ -36,12 +39,38 @@ export async function douyin(client, event) {
       const caption = `${title} \n\nBy <a href="https://www.douyin.com/user/${
         result.author.uid
       }">@${result.author.name}</a> \nFrom @${me.username.toLowerCase()}`;
+      if (result?.images) {
+        const chunkSize = 10;
+        const batches = [];
 
-      await client.sendMessage(event.chatId, {
-        file: result.video_url,
-        message: caption,
-        parseMode: "html",
-      });
+        // 将图片列表分批
+        for (let i = 0; i < result.images.length; i += chunkSize) {
+          const batch = result.images.slice(i, i + chunkSize);
+          batches.push(batch);
+        }
+
+        // 循环发送每一批
+        for (const batch of batches) {
+          // 修改：使用 InputMediaPhotoExternal 并传入 url 属性
+          const media = batch.map(
+            (imageUrl) => new Api.InputMediaPhotoExternal({ url: imageUrl })
+          );
+
+          // 发送影集
+          await client.sendFile(event.chatId, {
+            file: media,
+            caption: caption, // 可以自定义标题
+            parseMode: "html",
+          });
+        }
+      } else {
+        // 发送视频消息
+        await client.sendMessage(event.chatId, {
+          file: result.video_url,
+          message: caption,
+          parseMode: "html",
+        });
+      }
       await client.deleteMessages(getmsg.chatId, [getmsg.id], {
         revoke: true,
       });
@@ -75,12 +104,11 @@ export async function kuaishou(client, event) {
         message: "正在获取视频信息，请稍等...",
       });
       const result = await Kuaishou(url);
-      console.log(JSON.stringify(result, null, 2));
 
-      if (!result || !result.url) {
+      if (!result) {
         await client.editMessage(getmsg.chatId, {
           message: getmsg.id,
-          text: "无法获取视频信息，请检查链接是否正确。",
+          text: "无法获取视频信息。",
         });
         return;
       }
@@ -91,11 +119,110 @@ export async function kuaishou(client, event) {
         result.author.uid
       }">@${result.author.name}</a> \nFrom @${me.username.toLowerCase()}`;
 
-      await client.sendMessage(event.chatId, {
-        file: result.url,
-        message: caption,
-        parseMode: "html",
+      // 新增对图片组的判断处理
+      if (result?.images) {
+        const chunkSize = 10;
+        const batches = [];
+        // 将图片列表分批
+        for (let i = 0; i < result.images.length; i += chunkSize) {
+          const batch = result.images.slice(i, i + chunkSize);
+          batches.push(batch);
+        }
+        // 循环发送每一批
+        for (const batch of batches) {
+          const media = batch.map(
+            (imageUrl) => new Api.InputMediaPhotoExternal({ url: imageUrl })
+          );
+          await client.sendFile(event.chatId, {
+            file: media,
+            caption: caption,
+            parseMode: "html",
+          });
+        }
+      } else {
+        // 发送视频消息
+        await client.sendMessage(event.chatId, {
+          file: result.video_url,
+          message: caption,
+          parseMode: "html",
+        });
+      }
+      await client.deleteMessages(getmsg.chatId, [getmsg.id], {
+        revoke: true,
       });
+    } catch (error) {
+      await client.sendMessage(event.chatId, {
+        message: `失败: ${error.message}`,
+      });
+    }
+  }
+}
+
+export async function ppx(client, event) {
+  const msg = event.message;
+  const message = msg.message;
+
+  if (message.startsWith("/ppx")) {
+    // 使用正则表达式提取链接
+    const urlMatch = message.match(/https?:\/\/[^\s]+/);
+    const url = urlMatch ? urlMatch[0] : null;
+
+    if (!url) {
+      await client.sendMessage(event.chatId, {
+        message:
+          "请提供支持的视频平台分享链接\n目前支持的平台:\n- 皮皮虾/皮皮虾图集",
+      });
+      return;
+    }
+
+    try {
+      const getmsg = await client.sendMessage(event.chatId, {
+        message: "正在获取视频信息，请稍等...",
+      });
+      const result = await pipix(url);
+
+      if (!result) {
+        await client.editMessage(getmsg.chatId, {
+          message: getmsg.id,
+          text: "无法获取视频信息。",
+        });
+        return;
+      }
+      const me = await client.getMe();
+
+      const title = result.title.replace(/(?<!\s)#/g, " #");
+      const caption = `${title} \n\nBy <a href="${url}">@${
+        result.author.name
+      }</a> \nFrom @${me.username.toLowerCase()}`;
+
+      // 新增对图片组的判断处理
+      if (result?.images) {
+        const chunkSize = 10;
+        const batches = [];
+        // 将图片列表分批
+        for (let i = 0; i < result.images.length; i += chunkSize) {
+          const batch = result.images.slice(i, i + chunkSize);
+          batches.push(batch);
+        }
+        // 循环发送每一批
+        for (const batch of batches) {
+          const media = batch.map(
+            (imageUrl) => new Api.InputMediaPhotoExternal({ url: imageUrl })
+          );
+          await client.sendFile(event.chatId, {
+            file: media,
+            caption: caption,
+            parseMode: "html",
+          });
+        }
+      } else {
+        // 发送视频消息
+        await client.sendMessage(event.chatId, {
+          file: result.video_url,
+          message: caption,
+          parseMode: "html",
+        });
+      }
       await client.deleteMessages(getmsg.chatId, [getmsg.id], {
         revoke: true,
       });

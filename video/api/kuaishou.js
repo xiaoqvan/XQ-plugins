@@ -1,8 +1,7 @@
 import axios from "axios";
 import UserAgent from "user-agents";
-import fs from "fs";
 
-const userAgent = new UserAgent();
+const userAgent = new UserAgent({ deviceCategory: "mobile" });
 
 async function parseVideoId(shareLink) {
   let redirectedUrl = shareLink;
@@ -45,7 +44,7 @@ function extractVideoInfo(html) {
     const userEid = photoData.userEid || null;
     const userName = photoData.userName || null;
     const caption = photoData.caption || "";
-    if (!photoData?.manifest) {
+    if (photoData?.ext_params.atlas) {
       const photojson = photoData.ext_params.atlas;
       const mainCdn = photojson.cdnList[0].cdn;
       const backupCdn = photojson.cdnList[1].cdn;
@@ -64,6 +63,8 @@ function extractVideoInfo(html) {
           name: userName,
         },
       };
+      // console.log(photoinfo);
+
       return photoinfo;
     } else {
       const adaptationSet = photoData?.manifest?.adaptationSet;
@@ -113,10 +114,6 @@ const Kuaishou = async (url) => {
 
   try {
     const videoData = await parseVideoId(url);
-    fs.writeFile("file.html", videoData, "utf8", (err) => {
-      if (err) console.error("写入失败喵~", err);
-      else console.log("写入成功喵~(=^･ω･^=)");
-    });
     const videoInfo = extractVideoInfo(videoData);
     return videoInfo;
   } catch (error) {

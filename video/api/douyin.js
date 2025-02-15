@@ -2,7 +2,7 @@ import axios from "axios";
 import UserAgent from "user-agents";
 import log from "#logger";
 
-const userAgent = new UserAgent();
+const userAgent = new UserAgent({ deviceCategory: "mobile" });
 // 解析分享链接中的视频ID
 async function parseVideoId(shareLink) {
   let videoId;
@@ -51,6 +51,8 @@ async function getVideoInfo(videoId) {
     const jsonDataMatch = htmlContent.match(
       /window\._ROUTER_DATA\s*=\s*(.*?)<\/script>/
     );
+    console.log(jsonDataMatch);
+
     if (jsonDataMatch) {
       const jsonData = JSON.parse(jsonDataMatch[1]);
       const loaderData = jsonData.loaderData;
