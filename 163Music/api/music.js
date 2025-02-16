@@ -140,9 +140,10 @@ const get163music = async (id, level) => {
   const cookies = readCookie();
   try {
     const songInfo = await MusicInfo(id);
+
     const songUrlData = await MusicUrl(id, level, cookies);
 
-    const { size, url, level: songLevel } = songUrlData.data[0];
+    const { type, size, url, level: songLevel } = songUrlData.data[0];
     const songDetails = songInfo.songs[0];
 
     const result = {
@@ -155,6 +156,7 @@ const get163music = async (id, level) => {
       size: size,
       time: songDetails.dt,
       url: url,
+      type: type,
     };
 
     log.debug(`获取歌曲信息成功：${JSON.stringify(result)}`);

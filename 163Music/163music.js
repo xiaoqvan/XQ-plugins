@@ -67,6 +67,7 @@ export default async function music(client, event) {
           });
         }
         songInfo = await get163music(music, level);
+        console.log(songInfo);
       } catch (error) {
         client.editMessage(message.chatId, {
           message: getmsg.id,
@@ -81,7 +82,13 @@ export default async function music(client, event) {
           const response = await fetch(songInfo.url);
           const arrayBuffer = await response.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);
-          const fileExtension = extname(songInfo.url).split("?")[0];
+          let fileExtension = extname(songInfo.url).split("?")[0];
+          // 如果文件没有后缀，则使用 songInfo.type 作为后缀（确保 type 前有一个点）
+          if (!fileExtension && songInfo.type) {
+            fileExtension = songInfo.type.startsWith(".")
+              ? songInfo.type
+              : "." + songInfo.type;
+          }
           const sanitizedFileName = `${songInfo.name.replace(
             /[/\\:*?"<>|]/g,
             ""
@@ -154,7 +161,7 @@ export default async function music(client, event) {
         } catch (songDownloadError) {
           await client.editMessage(message.chatId, {
             message: getmsg.id,
-            text: "无法下载歌曲文件，请检查你的id是否正确。",
+            text: "无法下载歌曲文件，可能是歌曲ID错误。",
           });
           throw new Error(`无法下载歌曲文件。${songDownloadError}`);
         }
