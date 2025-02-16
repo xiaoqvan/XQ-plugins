@@ -51,7 +51,6 @@ async function getVideoInfo(videoId) {
     const jsonDataMatch = htmlContent.match(
       /window\._ROUTER_DATA\s*=\s*(.*?)<\/script>/
     );
-    console.log(jsonDataMatch);
 
     if (jsonDataMatch) {
       const jsonData = JSON.parse(jsonDataMatch[1]);
