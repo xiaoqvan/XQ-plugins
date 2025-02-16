@@ -36,9 +36,11 @@ export async function douyin(client, event) {
       }
       const me = await client.getMe();
       const title = result.title.replace(/(?<!\s)#/g, " #");
-      const caption = `${title} \n\nBy <a href="https://www.douyin.com/user/${
+      const caption = `${title}\n\nBy <a href="https://www.douyin.com/user/${
         result.author.uid
-      }">@${result.author.name}</a> \nFrom @${me.username.toLowerCase()}`;
+      }">@${
+        result.author.name
+      }</a>\nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
       if (result?.images) {
         const chunkSize = 10;
         const batches = [];
@@ -115,9 +117,11 @@ export async function kuaishou(client, event) {
       const me = await client.getMe();
 
       const title = result.title.replace(/(?<!\s)#/g, " #");
-      const caption = `${title} \n\nBy <a href="https://www.kuaishou.com/profile/${
+      const caption = `${title} \n\nby <a href="https://www.kuaishou.com/profile/${
         result.author.uid
-      }">@${result.author.name}</a> \nFrom @${me.username.toLowerCase()}`;
+      }">@${
+        result.author.name
+      }</a> \nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
 
       // 新增对图片组的判断处理
       if (result?.images) {
@@ -191,9 +195,9 @@ export async function ppx(client, event) {
       const me = await client.getMe();
 
       const title = result.title.replace(/(?<!\s)#/g, " #");
-      const caption = `${title} \n\nBy <a href="${url}">@${
+      const caption = `${title} \n\nBy<a href="${url}">@${
         result.author.name
-      }</a> \nFrom @${me.username.toLowerCase()}`;
+      }</a> \nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
 
       // 新增对图片组的判断处理
       if (result?.images) {
