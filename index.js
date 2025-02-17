@@ -6,12 +6,13 @@ import { eventupdate } from "../../core/api/event.js";
 export default async function (client) {
   eventupdate.on("CommandMessage", async (event) => {
     try {
-      // 把获取的消息赋值给message
       const message = event.message;
       const cmd = message.message.split(" ")[0];
       const commands = {
         "/music": music,
+        "/dy": douyin,
         "/douyin": douyin,
+        "/ks": kuaishou,
         "/kuaishou": kuaishou,
         "/ppx": ppx,
       };

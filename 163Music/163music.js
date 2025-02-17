@@ -67,7 +67,7 @@ export default async function music(client, event) {
           });
         }
         songInfo = await get163music(music, level);
-        console.log(songInfo);
+        // console.log(songInfo);
       } catch (error) {
         client.editMessage(message.chatId, {
           message: getmsg.id,

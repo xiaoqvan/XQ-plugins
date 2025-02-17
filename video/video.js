@@ -7,7 +7,7 @@ export async function douyin(client, event) {
   const msg = event.message;
   const message = msg.message;
 
-  if (message.startsWith("/douyin")) {
+  if (message.startsWith("/douyin") || message.startsWith("/dy")) {
     // 使用正则表达式提取链接
     const urlMatch = message.match(/https?:\/\/[^\s]+/);
     const url = urlMatch ? urlMatch[0] : null;
@@ -88,7 +88,7 @@ export async function kuaishou(client, event) {
   const msg = event.message;
   const message = msg.message;
 
-  if (message.startsWith("/kuaishou")) {
+  if (message.startsWith("/kuaishou") || message.startsWith("/ks")) {
     // 使用正则表达式提取链接
     const urlMatch = message.match(/https?:\/\/[^\s]+/);
     const url = urlMatch ? urlMatch[0] : null;
