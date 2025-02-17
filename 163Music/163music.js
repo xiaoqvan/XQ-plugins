@@ -116,6 +116,7 @@ export default async function music(client, event) {
             });
 
             try {
+              const me = await client.getMe();
               const qualityText = qualityMap[songInfo.level] || songInfo.level;
               const test = `${songInfo.name} - ${
                 songInfo.artists
@@ -123,11 +124,14 @@ export default async function music(client, event) {
                 buffer.length /
                 1024 /
                 1024
-              ).toFixed(2)} MB`;
+              ).toFixed(
+                2
+              )} MB\nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
               const commonMessageOptions = {
                 file: filePath,
                 thumb: coverPath,
                 message: test,
+                parseMode: "html",
                 attributes: [
                   new Api.DocumentAttributeAudio({
                     title: songInfo.name,
