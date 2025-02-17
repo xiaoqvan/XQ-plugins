@@ -107,6 +107,11 @@ const isValidKuaishouUrl = (url) => {
   return pattern.test(url);
 };
 
+/**
+ * @param {string} url - 快手分享链接
+ * @returns - 视频信息
+ *
+ */
 const Kuaishou = async (url) => {
   if (!isValidKuaishouUrl(url)) {
     throw new Error("无效的快手分享链接");

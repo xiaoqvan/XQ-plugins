@@ -3,9 +3,19 @@ import UserAgent from "user-agents";
 import log from "#logger";
 
 const userAgent = new UserAgent({ deviceCategory: "mobile" });
-// 解析分享链接中的视频ID
+
+/**
+ * 解析抖音分享链接中的视频ID
+ * @param {string} shareLink - 抖音分享链接
+ * @returns {string} - 视频ID
+ */
 async function parseVideoId(shareLink) {
   let videoId;
+  if (shareLink.includes("iesdouyin.com/share/video/")) {
+    const idPart = shareLink.split("/share/video/")[1];
+    videoId = idPart.split("?")[0];
+    return videoId;
+  }
   if (shareLink.includes("douyin.com/video/")) {
     // 处理电脑网页版分享链接
     videoId = shareLink.split("/video/")[1];
@@ -39,6 +49,11 @@ async function parseVideoId(shareLink) {
 }
 
 // 获取视频的详细信息
+/**
+ * 获取视频的详细信息
+ * @param {string} videoId - 视频ID
+ * @returns {object} - 视频详细
+ */
 async function getVideoInfo(videoId) {
   try {
     const videoInfoUrl = `https://www.iesdouyin.com/share/video/${videoId}/`;
@@ -129,7 +144,11 @@ async function getVideoInfo(videoId) {
   }
 }
 
-// 获取视频的最终播放地址
+/**
+ * 获取视频的最终播放地址
+ * @param {string} videoUrl - 视频URL
+ * @returns {string} - 最终播放地址
+ */
 async function getFinalVideoUrl(videoUrl) {
   try {
     const response = await axios.get(videoUrl, {
@@ -148,6 +167,11 @@ async function getFinalVideoUrl(videoUrl) {
 
 (async () => {})();
 
+/**
+ * 解析抖音分享链接并获取视频信息
+ * @param {string} url - 抖音分享链接
+ * @returns {object} - 视频信息
+ */
 const DouYin = async (url) => {
   log.debug(`收到链接: ${url}`);
 

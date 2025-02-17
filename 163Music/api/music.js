@@ -136,6 +136,19 @@ const search = async (keyword, cookies) => {
   return response;
 };
 
+/**
+ *
+ * @param {Number} id - 歌曲ID
+ * @param {('standard'|'exhigh'|'lossless'|'hires'|'sky'|'jyeffect'|'jymaster')} level - 音质等级:
+ *        - standard: 标准音质
+ *        - exhigh: 极高音质
+ *        - lossless: 无损音质
+ *        - hires: Hires音质
+ *        - sky: 沉浸环绕声
+ *        - jyeffect: 高清环绕声
+ *        - jymaster: 超清母带
+ * @returns {Promise<object>} - 歌曲信息
+ */
 const get163music = async (id, level) => {
   const cookies = readCookie();
   try {
@@ -167,6 +180,11 @@ const get163music = async (id, level) => {
   }
 };
 
+/**
+ * 搜索歌曲
+ * @param {string} keyword - 搜索关键词
+ * @returns {Promise<Array>} - 搜索结果
+ */
 const searchMusic = async (keyword) => {
   const cookies = readCookie();
   const data = await search(keyword, cookies);
