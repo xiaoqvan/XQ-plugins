@@ -21,3 +21,18 @@ git clone https://github.com/xiaoqvan/xq-plugins.git ./plugins/XQ-plugins
 
 ## 配置
 首次使用音乐解析后会在 `163Music\api` 目录下生成一个 `163cookie.yaml` 文件，在 `MUSIC_U` 中填入你的cookie，然后重启bot。
+
+## 单独调用
+在每个api文件夹中你可以单独调用每个文件导出函数
+需要初始化并安装依赖
+```bash
+# 初始化
+npm init
+# or
+pnpm init
+# -------
+# 安装依赖
+npm install user-agents axios crypto js-yaml
+# or
+pnpm install user-agents axios crypto js-yaml
+```
