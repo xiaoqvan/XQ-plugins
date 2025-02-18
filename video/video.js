@@ -3,237 +3,121 @@ import Kuaishou from "./api/kuaishou.js";
 import pipix from "./api/ppx.js";
 import { Api } from "telegram";
 
-export async function douyin(client, event) {
+// 抽取公共的发送媒体函数
+async function sendMedia(client, chatId, result, caption) {
+  if (result?.images) {
+    const chunkSize = 10;
+    const batches = [];
+    for (let i = 0; i < result.images.length; i += chunkSize) {
+      batches.push(result.images.slice(i, i + chunkSize));
+    }
+    for (const batch of batches) {
+      const media = batch.map(
+        (imageUrl) => new Api.InputMediaPhotoExternal({ url: imageUrl })
+      );
+      await client.sendFile(chatId, {
+        file: media,
+        caption: caption,
+        parseMode: "html",
+      });
+    }
+  } else {
+    await client.sendMessage(chatId, {
+      file: result.video_url,
+      message: caption,
+      parseMode: "html",
+    });
+  }
+}
+
+// 统一的视频处理函数
+async function handleVideo(client, event, platform, apiFunc, platformName) {
   const msg = event.message;
   const message = msg.message;
+  const isChannel = msg.peerId.className === "PeerChannel";
 
-  if (message.startsWith("/douyin") || message.startsWith("/dy")) {
-    // 使用正则表达式提取链接
-    const urlMatch = message.match(/https?:\/\/[^\s]+/);
-    const url = urlMatch ? urlMatch[0] : null;
+  const urlMatch = message.match(/https?:\/\/[^\s]+/);
+  const url = urlMatch ? urlMatch[0] : null;
 
-    if (!url) {
-      await client.sendMessage(event.chatId, {
-        message:
-          "请提供支持的视频平台分享链接\n目前支持的平台:\n- 抖音/抖音图集",
+  if (!url) {
+    await client.sendMessage(event.chatId, {
+      message: `请提供支持的视频平台分享链接\n目前支持的平台:\n- ${platformName}`,
+    });
+    return;
+  }
+
+  if (isChannel) {
+    await client.deleteMessages(event.chatId, [msg.id], { revoke: true });
+  }
+
+  try {
+    let getmsg;
+    if (!isChannel) {
+      getmsg = await client.sendMessage(event.chatId, {
+        message: "正在获取视频信息，请稍等...",
       });
+    }
+
+    const result = await apiFunc(url);
+    if (!result || (platform === "douyin" && !result.video_url === " ")) {
+      const errorMsg = "无法获取视频信息，请检查链接是否正确。";
+      if (!isChannel) {
+        await client.editMessage(getmsg.chatId, {
+          message: getmsg.id,
+          text: errorMsg,
+        });
+      } else {
+        await client.sendMessage(event.chatId, { message: errorMsg });
+      }
       return;
     }
 
-    try {
-      const getmsg = await client.sendMessage(event.chatId, {
-        message: "正在获取视频信息，请稍等...",
-      });
-      const result = await DouYin(url);
-      // console.log(result);
+    const me = await client.getMe();
+    const title = result.title.replace(/(?<!\s)#/g, " #");
+    let caption;
 
-      if (!result || !result.video_url === " ") {
-        await client.editMessage(getmsg.chatId, {
-          message: getmsg.id,
-          text: "无法获取视频信息，请检查链接是否正确。",
-        });
-        return;
-      }
-      const me = await client.getMe();
-      const title = result.title.replace(/(?<!\s)#/g, " #");
-      const caption = `${title}\n\nBy <a href="https://www.douyin.com/user/${
-        result.author.uid
-      }">@${
-        result.author.name
-      }</a>\nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
-      if (result?.images) {
-        const chunkSize = 10;
-        const batches = [];
-
-        // 将图片列表分批
-        for (let i = 0; i < result.images.length; i += chunkSize) {
-          const batch = result.images.slice(i, i + chunkSize);
-          batches.push(batch);
-        }
-
-        // 循环发送每一批
-        for (const batch of batches) {
-          // 修改：使用 InputMediaPhotoExternal 并传入 url 属性
-          const media = batch.map(
-            (imageUrl) => new Api.InputMediaPhotoExternal({ url: imageUrl })
-          );
-
-          // 发送影集
-          await client.sendFile(event.chatId, {
-            file: media,
-            caption: caption, // 可以自定义标题
-            parseMode: "html",
-          });
-        }
-      } else {
-        // 发送视频消息
-        await client.sendMessage(event.chatId, {
-          file: result.video_url,
-          message: caption,
-          parseMode: "html",
-        });
-      }
-      await client.deleteMessages(getmsg.chatId, [getmsg.id], {
-        revoke: true,
-      });
-    } catch (error) {
-      await client.sendMessage(event.chatId, {
-        message: `消息发送失败: ${error.message}`,
-      });
+    switch (platform) {
+      case "douyin":
+        caption = `${title}\n\nBy <a href="https://www.douyin.com/user/${result.author.uid}">@${result.author.name}</a>`;
+        break;
+      case "kuaishou":
+        caption = `${title}\n\nBy <a href="https://www.kuaishou.com/profile/${result.author.uid}">@${result.author.name}</a>`;
+        break;
+      case "ppx":
+        caption = `${title}\n\nBy <a href="${url}">@${result.author.name}</a>`;
+        break;
     }
+    caption += `\nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
+
+    await sendMedia(client, event.chatId, result, caption, isChannel);
+
+    if (!isChannel && getmsg) {
+      await client.deleteMessages(getmsg.chatId, [getmsg.id], { revoke: true });
+    }
+  } catch (error) {
+    await client.sendMessage(event.chatId, {
+      message: `消息发送失败: ${error.message}`,
+    });
+  }
+}
+
+export async function douyin(client, event) {
+  const msg = event.message;
+  if (msg.message.startsWith("/douyin") || msg.message.startsWith("/dy")) {
+    await handleVideo(client, event, "douyin", DouYin, "抖音/抖音图集");
   }
 }
 
 export async function kuaishou(client, event) {
   const msg = event.message;
-  const message = msg.message;
-
-  if (message.startsWith("/kuaishou") || message.startsWith("/ks")) {
-    // 使用正则表达式提取链接
-    const urlMatch = message.match(/https?:\/\/[^\s]+/);
-    const url = urlMatch ? urlMatch[0] : null;
-
-    if (!url) {
-      await client.sendMessage(event.chatId, {
-        message:
-          "请提供支持的视频平台分享链接\n目前支持的平台:\n- 快手/快手图集",
-      });
-      return;
-    }
-
-    try {
-      const getmsg = await client.sendMessage(event.chatId, {
-        message: "正在获取视频信息，请稍等...",
-      });
-      const result = await Kuaishou(url);
-
-      if (!result) {
-        await client.editMessage(getmsg.chatId, {
-          message: getmsg.id,
-          text: "无法获取视频信息。",
-        });
-        return;
-      }
-      const me = await client.getMe();
-
-      const title = result.title.replace(/(?<!\s)#/g, " #");
-      const caption = `${title} \n\nby <a href="https://www.kuaishou.com/profile/${
-        result.author.uid
-      }">@${
-        result.author.name
-      }</a> \nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
-
-      // 新增对图片组的判断处理
-      if (result?.images) {
-        const chunkSize = 10;
-        const batches = [];
-        // 将图片列表分批
-        for (let i = 0; i < result.images.length; i += chunkSize) {
-          const batch = result.images.slice(i, i + chunkSize);
-          batches.push(batch);
-        }
-        // 循环发送每一批
-        for (const batch of batches) {
-          const media = batch.map(
-            (imageUrl) => new Api.InputMediaPhotoExternal({ url: imageUrl })
-          );
-          await client.sendFile(event.chatId, {
-            file: media,
-            caption: caption,
-            parseMode: "html",
-          });
-        }
-      } else {
-        // 发送视频消息
-        await client.sendMessage(event.chatId, {
-          file: result.video_url,
-          message: caption,
-          parseMode: "html",
-        });
-      }
-      await client.deleteMessages(getmsg.chatId, [getmsg.id], {
-        revoke: true,
-      });
-    } catch (error) {
-      await client.sendMessage(event.chatId, {
-        message: `失败: ${error.message}`,
-      });
-    }
+  if (msg.message.startsWith("/kuaishou") || msg.message.startsWith("/ks")) {
+    await handleVideo(client, event, "kuaishou", Kuaishou, "快手/快手图集");
   }
 }
 
 export async function ppx(client, event) {
   const msg = event.message;
-  const message = msg.message;
-
-  if (message.startsWith("/ppx")) {
-    // 使用正则表达式提取链接
-    const urlMatch = message.match(/https?:\/\/[^\s]+/);
-    const url = urlMatch ? urlMatch[0] : null;
-
-    if (!url) {
-      await client.sendMessage(event.chatId, {
-        message:
-          "请提供支持的视频平台分享链接\n目前支持的平台:\n- 皮皮虾/皮皮虾图集",
-      });
-      return;
-    }
-
-    try {
-      const getmsg = await client.sendMessage(event.chatId, {
-        message: "正在获取视频信息，请稍等...",
-      });
-      const result = await pipix(url);
-
-      if (!result) {
-        await client.editMessage(getmsg.chatId, {
-          message: getmsg.id,
-          text: "无法获取视频信息。",
-        });
-        return;
-      }
-      const me = await client.getMe();
-
-      const title = result.title.replace(/(?<!\s)#/g, " #");
-      const caption = `${title} \n\nBy<a href="${url}">@${
-        result.author.name
-      }</a> \nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
-
-      // 新增对图片组的判断处理
-      if (result?.images) {
-        const chunkSize = 10;
-        const batches = [];
-        // 将图片列表分批
-        for (let i = 0; i < result.images.length; i += chunkSize) {
-          const batch = result.images.slice(i, i + chunkSize);
-          batches.push(batch);
-        }
-        // 循环发送每一批
-        for (const batch of batches) {
-          const media = batch.map(
-            (imageUrl) => new Api.InputMediaPhotoExternal({ url: imageUrl })
-          );
-          await client.sendFile(event.chatId, {
-            file: media,
-            caption: caption,
-            parseMode: "html",
-          });
-        }
-      } else {
-        // 发送视频消息
-        await client.sendMessage(event.chatId, {
-          file: result.video_url,
-          message: caption,
-          parseMode: "html",
-        });
-      }
-      await client.deleteMessages(getmsg.chatId, [getmsg.id], {
-        revoke: true,
-      });
-    } catch (error) {
-      await client.sendMessage(event.chatId, {
-        message: `失败: ${error.message}`,
-      });
-    }
+  if (msg.message.startsWith("/ppx")) {
+    await handleVideo(client, event, "ppx", pipix, "皮皮虾/皮皮虾图集");
   }
 }
