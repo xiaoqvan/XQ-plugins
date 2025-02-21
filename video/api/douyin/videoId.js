@@ -1,9 +1,29 @@
-import puppeteer from "puppeteer";
+import os from "os";
+let puppeteer;
+if (os.platform() === "android") {
+  puppeteer = await import("puppeteer-core");
+} else {
+  puppeteer = await import("puppeteer");
+}
+import { execSync } from "child_process";
 import UserAgent from "user-agents";
+
+let executablePath;
+if (os.platform() === "android") {
+  try {
+    executablePath = execSync("which chromium-browser").toString().trim();
+    if (!executablePath) {
+      throw new Error("chromium-browser not found in PATH");
+    }
+  } catch (error) {
+    throw new error();
+  }
+}
 
 export async function getDouYinVideoId(url) {
   const browser = await puppeteer.launch({
-    headless: "mew",
+    executablePath,
+    headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
 
