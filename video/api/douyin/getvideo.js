@@ -57,7 +57,8 @@ const COMMON_PARAMS = {
 };
 
 const COMMON_HEADERS = {
-  "User-Agent": ua,
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
   "sec-fetch-site": "same-origin",
   "sec-fetch-mode": "cors",
   "sec-fetch-dest": "empty",
@@ -201,7 +202,7 @@ async function parseVideoId(shareLink) {
 }
 
 async function getcookies(shareLink) {
-  console.log("获取cookies");
+  // console.log("获取cookies");
   const video_id = await getDouYinVideoId(shareLink);
   fs.writeFileSync(
     join(__dirname, "cookies.yaml"),

@@ -25,14 +25,18 @@ git clone https://github.com/xiaoqvan/xq-plugins.git ./plugins/XQ-plugins
 ## 单独调用
 在每个api文件夹中你可以单独调用每个文件导出函数
 需要初始化并安装依赖
+Linux 系统下补全`puppeteer`环境 https://pptr.dev/troubleshooting#chrome-doesnt-launch-on-linux
 ```bash
 # 初始化
 npm init
 # or
 pnpm init
 # -------
+# 在package.json中添加
+# "type": "module",
+# -------
 # 安装依赖
-npm install user-agents axios crypto js-yaml
+npm install user-agents axios crypto js-yaml puppeteer puppeteer-core
 # or
-pnpm install user-agents axios crypto js-yaml
+pnpm install user-agents axios crypto js-yaml puppeteer puppeteer-core
 ```

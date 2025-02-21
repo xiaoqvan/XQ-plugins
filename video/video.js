@@ -78,7 +78,7 @@ async function handleVideo(client, event, platform, apiFunc, platformName) {
 
     switch (platform) {
       case "douyin":
-        caption = `${title}\n\nBy <a href="https://www.douyin.com/user/${result.author.uid}">@${result.author.name}</a>`;
+        caption = `${title}\n\nBy <a href="https://www.douyin.com/user/${result.author.sec_uid}">@${result.author.name}</a>`;
         break;
       case "kuaishou":
         caption = `${title}\n\nBy <a href="https://www.kuaishou.com/profile/${result.author.uid}">@${result.author.name}</a>`;
