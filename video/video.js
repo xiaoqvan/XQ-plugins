@@ -1,4 +1,4 @@
-import DouYin from "./api/douyin.js";
+import DouYin from "./api/douyin/index.js";
 import Kuaishou from "./api/kuaishou.js";
 import pipix from "./api/ppx.js";
 import { Api } from "telegram";
@@ -23,7 +23,7 @@ async function sendMedia(client, chatId, result, caption) {
     }
   } else {
     await client.sendMessage(chatId, {
-      file: result.video_url,
+      file: result.video?.video_url || result.video_url,
       message: caption,
       parseMode: "html",
     });
@@ -41,7 +41,7 @@ async function handleVideo(client, event, platform, apiFunc, platformName) {
 
   if (!url) {
     await client.sendMessage(event.chatId, {
-      message: `请提供支持的视频平台分享链接\n目前支持的平台:\n- ${platformName}`,
+      message: `请提供视频平台分享链接\n目前支持的格式:\n- ${platformName}`,
     });
     return;
   }
@@ -59,7 +59,7 @@ async function handleVideo(client, event, platform, apiFunc, platformName) {
     }
 
     const result = await apiFunc(url);
-    if (!result || (platform === "douyin" && !result.video_url === " ")) {
+    if (!result || (platform === "douyin" && !result.video?.video_url)) {
       const errorMsg = "无法获取视频信息，请检查链接是否正确。";
       if (!isChannel) {
         await client.editMessage(getmsg.chatId, {
@@ -89,7 +89,19 @@ async function handleVideo(client, event, platform, apiFunc, platformName) {
     }
     caption += `\nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
 
-    await sendMedia(client, event.chatId, result, caption, isChannel);
+    try {
+      await sendMedia(client, event.chatId, result, caption, isChannel);
+    } catch (sendError) {
+      if (!isChannel) {
+        const videoUrl = result.video?.video_url || result.video_url;
+        await client.sendMessage(event.chatId, {
+          message: `视频文件过大，无法直接发送。\n您可以通过以下链接下载：${videoUrl}`,
+          parseMode: "html",
+        });
+      } else {
+        throw sendError;
+      }
+    }
 
     if (!isChannel && getmsg) {
       await client.deleteMessages(getmsg.chatId, [getmsg.id], { revoke: true });
@@ -104,7 +116,7 @@ async function handleVideo(client, event, platform, apiFunc, platformName) {
 export async function douyin(client, event) {
   const msg = event.message;
   if (msg.message.startsWith("/douyin") || msg.message.startsWith("/dy")) {
-    await handleVideo(client, event, "douyin", DouYin, "抖音/抖音图集");
+    await handleVideo(client, event, "douyin", DouYin, "抖音视频");
   }
 }
 
