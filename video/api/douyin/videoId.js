@@ -24,13 +24,43 @@ export async function getDouYinVideoId(url) {
   const browser = await puppeteer.launch({
     executablePath,
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    args: [
+      "--no-sandbox",
+      "--incognito",
+      "--disable-blink-features=AutomationControlled",
+    ],
   });
 
   const context = await browser.createBrowserContext();
+  await context.deleteCookie();
   const incognitoPage = await context.newPage();
+  await incognitoPage.evaluate(() => {
+    Object.defineProperty(navigator, "webdriver", {
+      get: () => undefined,
+      configurable: true,
+    });
+    delete navigator.webdriver;
+  });
+  await incognitoPage.evaluate(() => {
+    Object.defineProperty(navigator, "platform", {
+      get: () => "Win32",
+    });
+  });
+  await incognitoPage.evaluateOnNewDocument(() => {
+    window.chrome = {
+      runtime: {},
+      loadTimes: function () {},
+      csi: function () {},
+      app: {},
+    };
+  });
 
-  const ua = new UserAgent({ deviceCategory: "desktop" }).toString();
+  const ua = new UserAgent({
+    deviceCategory: "desktop",
+    platform: "Win32",
+  }).toString();
+  // console.log("User-Agent:", ua);
+
   await incognitoPage.setUserAgent(ua);
 
   let maxLengthCookie = "";
@@ -58,7 +88,7 @@ export async function getDouYinVideoId(url) {
     const videoId = match[1];
     // console.log("视频ID:", videoId);
     await incognitoPage.reload({
-      waitUntil: ["load"],
+      waitUntil: ["networkidle2"],
       timeout: 60000,
     });
 

@@ -21,7 +21,10 @@ const sandbox = {};
 vm.createContext(sandbox);
 vm.runInContext(douyinJs, sandbox);
 
-const ua = new UserAgent({ deviceCategory: "desktop" }).toString();
+const ua = new UserAgent({
+  deviceCategory: "desktop",
+  platform: "Win32",
+}).toString();
 
 const COMMON_PARAMS = {
   device_platform: "webapp",
@@ -204,41 +207,41 @@ async function parseVideoId(shareLink) {
 async function getcookies(shareLink) {
   // console.log("获取cookies");
   const video_id = await getDouYinVideoId(shareLink);
-  fs.writeFileSync(
-    join(__dirname, "cookies.yaml"),
-    yaml.dump(video_id.cookies)
-  );
   return video_id.cookies;
 }
 function buildVideoInfo(data) {
   const videoInfo = {
-    video_id: data.aweme_detail.aweme_id,
-    title: data.aweme_detail.desc,
-    cover_url: data.aweme_detail.video.origin_cover.url_list[0],
+    video_id: data.aweme_detail?.aweme_id || null,
+    title: data.aweme_detail?.desc || null,
+    cover_url: data.aweme_detail?.video?.origin_cover?.url_list?.[0] || null,
     video: {
       video_url:
-        data.aweme_detail.video.bit_rate[0].play_addr.url_list[
-          data.aweme_detail.video.bit_rate[0].play_addr.url_list.length - 1
-        ],
-      fps: data.aweme_detail.video.bit_rate[0].FPS,
-      height: data.aweme_detail.video.bit_rate[0].play_addr.height,
-      width: data.aweme_detail.video.bit_rate[0].play_addr.width,
+        data.aweme_detail?.video?.bit_rate?.[0]?.play_addr?.url_list &&
+        data.aweme_detail.video.bit_rate[0].play_addr.url_list.length > 0
+          ? data.aweme_detail.video.bit_rate[0].play_addr.url_list[
+              data.aweme_detail.video.bit_rate[0].play_addr.url_list.length - 1
+            ]
+          : null,
+      fps: data.aweme_detail?.video?.bit_rate?.[0]?.FPS || null,
+      height:
+        data.aweme_detail?.video?.bit_rate?.[0]?.play_addr?.height || null,
+      width: data.aweme_detail?.video?.bit_rate?.[0]?.play_addr?.width || null,
     },
     author: {
-      avatar: data.aweme_detail.author.avatar_thumb.url_list[0],
-      name: data.aweme_detail.author.nickname,
-      sec_uid: data.aweme_detail.author.sec_uid,
-      uid: data.aweme_detail.author.uid,
+      avatar: data.aweme_detail?.author?.avatar_thumb?.url_list?.[0] || null,
+      name: data.aweme_detail?.author?.nickname || null,
+      sec_uid: data.aweme_detail?.author?.sec_uid || null,
+      uid: data.aweme_detail?.author?.uid || null,
     },
     music: {
-      id: data.aweme_detail.music.id,
-      id_str: data.aweme_detail.music.id_str,
-      name: data.aweme_detail.music.title,
-      url: data.aweme_detail.music.play_url.url_list[0],
-      author: data.aweme_detail.music.author,
-      sec_uid: data.aweme_detail.music.sec_uid,
-      avatar: data.aweme_detail.music.avatar_large.url_list[0],
-      cover: data.aweme_detail.music.cover_hd.url_list[0],
+      id: data.aweme_detail?.music?.id || null,
+      id_str: data.aweme_detail?.music?.id_str || null,
+      name: data.aweme_detail?.music?.title || null,
+      url: data.aweme_detail?.music?.play_url?.url_list?.[0] || null,
+      author: data.aweme_detail?.music?.author || null,
+      sec_uid: data.aweme_detail?.music?.sec_uid || null,
+      avatar: data.aweme_detail?.music?.avatar_large?.url_list?.[0] || null,
+      cover: data.aweme_detail?.music?.cover_hd?.url_list?.[0] || null,
     },
   };
   return videoInfo;
@@ -265,7 +268,6 @@ export async function getDouYin(shareLink) {
 
     while (retryCount < maxRetries) {
       try {
-        cookies = await getcookies(shareLink);
         console.log(`请求失败重试第${retryCount + 1}次`);
         const retryData = await DouYin_request(video_id, cookies);
         if (retryData !== "") {
@@ -278,7 +280,20 @@ export async function getDouYin(shareLink) {
       retryCount++;
     }
 
-    throw new Error("获取失败");
+    // 重试2次后仍然失败，尝试更换cookie
+    console.log("重试失败，尝试更换cookie...");
+    try {
+      cookies = await getcookies(shareLink);
+      const retryData = await DouYin_request(video_id, cookies);
+      if (retryData !== "") {
+        const videoInfo = buildVideoInfo(retryData);
+        return videoInfo;
+      }
+    } catch (error) {
+      console.log("更换cookie后请求仍然失败:", error.message);
+    }
+
+    throw new Error("多次尝试后获取失败");
   }
   // fs.writeFileSync(
   //   join(__dirname, "videoInfo.json"),
