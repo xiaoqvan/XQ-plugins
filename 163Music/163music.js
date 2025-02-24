@@ -42,7 +42,7 @@ export default async function music(client, event) {
       if (message.peerId?.className === "PeerUser") {
         client.sendMessage(message.chatId, {
           message:
-            "请提供歌曲ID或名称。\n下载歌曲 /music <歌曲名ID> \n搜索 /music <歌曲名称>",
+            "请提供歌曲ID或名称。\n下载歌曲 /music <歌曲ID> \n搜索 /music <歌曲名称>",
         });
       } else {
         await client.sendMessage(message.chatId, {
