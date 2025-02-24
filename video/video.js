@@ -41,7 +41,7 @@ async function handleVideo(client, event, platform, apiFunc, platformName) {
 
   if (!url) {
     await client.sendMessage(event.chatId, {
-      message: `请提供视频平台分享链接\n目前支持的格式:\n- ${platformName}`,
+      message: `请提供视频平台分享链接\n目前支持的格式:\n- ${platformName}\n /命令 <url>`,
     });
     return;
   }

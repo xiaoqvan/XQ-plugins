@@ -41,7 +41,8 @@ export default async function music(client, event) {
     if (!music) {
       if (message.peerId?.className === "PeerUser") {
         client.sendMessage(message.chatId, {
-          message: "请提供歌曲ID或名称。",
+          message:
+            "请提供歌曲ID或名称。\n下载歌曲 /music <歌曲名ID> \n搜索 /music <歌曲名称>",
         });
       } else {
         await client.sendMessage(message.chatId, {
@@ -71,7 +72,7 @@ export default async function music(client, event) {
       } catch (error) {
         client.editMessage(message.chatId, {
           message: getmsg.id,
-          text: "获取歌曲信息失败。",
+          text: `获取歌曲信息失败:${error.message}`,
         });
         throw error;
       }
@@ -165,7 +166,7 @@ export default async function music(client, event) {
         } catch (songDownloadError) {
           await client.editMessage(message.chatId, {
             message: getmsg.id,
-            text: "无法下载歌曲文件，可能是歌曲ID错误。",
+            text: `无法下载歌曲文件${songDownloadError.message}`,
           });
           throw new Error(`无法下载歌曲文件。${songDownloadError}`);
         }
@@ -191,7 +192,7 @@ export default async function music(client, event) {
       } catch (error) {
         client.editMessage(message.chatId, {
           message: searchmsg.id,
-          text: "搜索歌曲失败。",
+          text: `搜索歌曲失败:${error.message}`,
         });
         throw error;
       }

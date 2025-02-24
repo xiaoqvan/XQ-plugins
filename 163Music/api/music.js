@@ -151,8 +151,14 @@ const get163music = async (id, level) => {
   const cookies = readCookie();
   try {
     const songInfo = await MusicInfo(id);
+    if (!songInfo.songs || songInfo.songs.length === 0) {
+      throw new Error("未找到歌曲信息");
+    }
 
     const songUrlData = await MusicUrl(id, level, cookies);
+    if (!songUrlData.data || songUrlData.data.length === 0) {
+      throw new Error("无法获取歌曲播放链接");
+    }
 
     const { type, size, url, level: songLevel } = songUrlData.data[0];
     const songDetails = songInfo.songs[0];
@@ -171,8 +177,8 @@ const get163music = async (id, level) => {
     };
     return result;
   } catch (error) {
-    console.error(error);
-    throw error;
+    console.error("获取歌曲信息失败:", error.message);
+    throw new Error("获取歌曲信息失败: " + error.message);
   }
 };
 
