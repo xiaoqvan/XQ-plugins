@@ -207,7 +207,7 @@ async function parseVideoId(shareLink) {
 async function getcookies(shareLink) {
   // console.log("获取cookies");
   const video_id = await getDouYinVideoId(shareLink);
-  return video_id.cookies;
+  return video_id;
 }
 function buildVideoInfo(data) {
   const videoInfo = {
@@ -250,6 +250,7 @@ function buildVideoInfo(data) {
 export async function getDouYin(shareLink) {
   let cookies;
   let video_id;
+  let data;
   try {
     cookies = yaml.load(
       fs.readFileSync(join(__dirname, "cookies.yaml"), "utf-8")
@@ -257,10 +258,27 @@ export async function getDouYin(shareLink) {
     video_id = await parseVideoId(shareLink);
   } catch {
     console.log("cookies.yaml 不存在");
-    cookies = await getcookies(shareLink);
+    const result = await getcookies(shareLink);
+    cookies = result.cookies;
+    video_id = result.videoId;
+    if (result.response !== "") {
+      data = result.response;
+      // 保存新的 cookies 到文件
+      try {
+        fs.writeFileSync(
+          join(__dirname, "cookies.yaml"),
+          yaml.dump(result.cookies)
+        );
+      } catch (error) {
+        console.log("保存 cookies.yaml 失败:", error.message);
+      }
+    }
+  }
+  // 只有在没有获取到 data 的情况下才发起请求
+  if (!data) {
+    data = await DouYin_request(video_id, cookies);
   }
 
-  const data = await DouYin_request(video_id, cookies);
   if (data === "") {
     // 最多重试2次
     let retryCount = 0;
@@ -283,10 +301,24 @@ export async function getDouYin(shareLink) {
     // 重试2次后仍然失败，尝试更换cookie
     console.log("重试失败，尝试更换cookie...");
     try {
-      cookies = await getcookies(shareLink);
-      const retryData = await DouYin_request(video_id, cookies);
-      if (retryData !== "") {
-        const videoInfo = buildVideoInfo(retryData);
+      const result = await getcookies(shareLink);
+      cookies = result.cookies;
+      if (result.response !== "") {
+        data = result.response;
+        // 保存新的 cookies 到文件
+        try {
+          fs.writeFileSync(
+            join(__dirname, "cookies.yaml"),
+            yaml.dump(result.cookies)
+          );
+        } catch (error) {
+          console.log("保存 cookies.yaml 失败:", error.message);
+        }
+      } else {
+        data = await DouYin_request(video_id, cookies);
+      }
+      if (data !== "") {
+        const videoInfo = buildVideoInfo(data);
         return videoInfo;
       }
     } catch (error) {

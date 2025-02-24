@@ -1,29 +1,7 @@
-import os from "os";
-let puppeteer;
-if (os.platform() === "android") {
-  puppeteer = await import("puppeteer-core");
-} else {
-  puppeteer = await import("puppeteer");
-}
-import { execSync } from "child_process";
-import UserAgent from "user-agents";
-
-let executablePath;
-if (os.platform() === "android") {
-  try {
-    executablePath = execSync("which chromium-browser").toString().trim();
-    if (!executablePath) {
-      throw new Error("chromium-browser not found in PATH");
-    }
-  } catch (error) {
-    throw new error();
-  }
-}
+import { BrowserManager } from "../../../api/browser.js";
 
 export async function getDouYinVideoId(url) {
-  const browser = await puppeteer.launch({
-    executablePath,
-    headless: true,
+  const browser = await BrowserManager.createBrowser({
     args: [
       "--no-sandbox",
       "--incognito",
@@ -31,40 +9,12 @@ export async function getDouYinVideoId(url) {
     ],
   });
 
-  const context = await browser.createBrowserContext();
-  await context.deleteCookie();
-  const incognitoPage = await context.newPage();
-  await incognitoPage.evaluate(() => {
-    Object.defineProperty(navigator, "webdriver", {
-      get: () => undefined,
-      configurable: true,
-    });
-    delete navigator.webdriver;
-  });
-  await incognitoPage.evaluate(() => {
-    Object.defineProperty(navigator, "platform", {
-      get: () => "Win32",
-    });
-  });
-  await incognitoPage.evaluateOnNewDocument(() => {
-    window.chrome = {
-      runtime: {},
-      loadTimes: function () {},
-      csi: function () {},
-      app: {},
-    };
-  });
-
-  const ua = new UserAgent({
-    deviceCategory: "desktop",
-    platform: "Win32",
-  }).toString();
-  // console.log("User-Agent:", ua);
-
-  await incognitoPage.setUserAgent(ua);
+  const incognitoPage = await BrowserManager.createIncognitoPage(browser);
 
   let maxLengthCookie = "";
+  let responseContent = "";
   await incognitoPage.setRequestInterception(true);
+
   incognitoPage.on("request", (request) => {
     if (request.url().includes("www.douyin.com/aweme/v1/web/aweme/detail/")) {
       const cookies = request.headers()["cookie"];
@@ -76,6 +26,20 @@ export async function getDouYinVideoId(url) {
     }
     request.continue();
   });
+
+  incognitoPage.on("response", async (response) => {
+    if (response.url().includes("www.douyin.com/aweme/v1/web/aweme/detail/")) {
+      try {
+        const content = await response.text();
+        if (content && content !== "") {
+          // 处理转义字符，将字符串转换为标准JSON
+          responseContent = JSON.parse(content);
+        }
+      } catch (error) {
+        console.error("获取响应内容失败:", error);
+      }
+    }
+  });
   // 请求URL并进行多级跳转
   await incognitoPage.goto(url, {
     waitUntil: "networkidle2",
@@ -86,7 +50,6 @@ export async function getDouYinVideoId(url) {
   const match = redirectedUrl.match(/\/video\/(\d+)/);
   if (match && match[1]) {
     const videoId = match[1];
-    // console.log("视频ID:", videoId);
     await incognitoPage.reload({
       waitUntil: ["networkidle2"],
       timeout: 60000,
@@ -94,11 +57,11 @@ export async function getDouYinVideoId(url) {
 
     await browser.close();
 
-    return { videoId, cookies: maxLengthCookie };
+    return { videoId, cookies: maxLengthCookie, response: responseContent };
   } else {
     console.error("未能提取视频ID");
     await browser.close();
-    return { videoId: null, cookies: "" };
+    return { videoId: null, cookies: "", response: null };
   }
 }
 

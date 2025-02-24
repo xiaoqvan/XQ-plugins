@@ -108,7 +108,7 @@ async function handleVideo(client, event, platform, apiFunc, platformName) {
     }
   } catch (error) {
     await client.sendMessage(event.chatId, {
-      message: `消息发送失败: ${error.message}`,
+      message: `${error.message}`,
     });
   }
 }
