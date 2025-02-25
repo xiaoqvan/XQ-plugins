@@ -1,5 +1,4 @@
 import { get163music, searchMusic } from "./api/music.js";
-import fetch from "node-fetch";
 import fs from "fs";
 import { join, extname } from "path";
 import { genImage, deleteImage } from "#puppeteer";
@@ -84,7 +83,6 @@ export default async function music(client, event) {
           const arrayBuffer = await response.arrayBuffer();
           const buffer = Buffer.from(arrayBuffer);
           let fileExtension = extname(songInfo.url).split("?")[0];
-          // 如果文件没有后缀，则使用 songInfo.type 作为后缀（确保 type 前有一个点）
           if (!fileExtension && songInfo.type) {
             fileExtension = songInfo.type.startsWith(".")
               ? songInfo.type
@@ -119,9 +117,10 @@ export default async function music(client, event) {
             try {
               const me = await client.getMe();
               const qualityText = qualityMap[songInfo.level] || songInfo.level;
-              const test = `${songInfo.name} - ${
-                songInfo.artists
-              }\n音质: ${qualityText}\n大小: ${(
+              const test = `<a href="https://music.163.com/#/song?id=${
+                songInfo.id
+              }">${songInfo.name} - ${songInfo.artists}</a>
+              \n音质: ${qualityText}\n大小: ${(
                 buffer.length /
                 1024 /
                 1024

@@ -15,8 +15,13 @@
 
 进入bot的根目录，执行以下命令来安装本插件
 
+你可以使用npm或者pnpm
+
 ```
 git clone https://github.com/xiaoqvan/xq-plugins.git ./plugins/XQ-plugins
+cd ./plugins/XQ-plugins
+
+npm install
 ```
 
 ## 配置
@@ -27,16 +32,8 @@ git clone https://github.com/xiaoqvan/xq-plugins.git ./plugins/XQ-plugins
 需要初始化并安装依赖
 Linux 系统下补全`puppeteer`环境 https://pptr.dev/troubleshooting#chrome-doesnt-launch-on-linux
 ```bash
-# 初始化
-npm init
-# or
-pnpm init
-# -------
-# 在package.json中添加
-# "type": "module",
-# -------
 # 安装依赖
-npm install user-agents axios crypto js-yaml puppeteer puppeteer-core
+npm install js-yaml puppeteer puppeteer-core
 # or
-pnpm install user-agents axios crypto js-yaml puppeteer puppeteer-core
+pnpm install js-yaml puppeteer puppeteer-core
 ```

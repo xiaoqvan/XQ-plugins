@@ -12,7 +12,9 @@
   "license": "ISC",
   "packageManager": "pnpm@10.4.1",
   "dependencies": {
-    "puppeteer-core": "^24.2.1"
+    "axios": "^1.7.9",
+    "puppeteer-core": "^24.2.1",
+    "user-agents": "^1.1.461"
   },
   "optionalDependencies": {
     "puppeteer": "^23.9.0"
