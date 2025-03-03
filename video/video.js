@@ -79,6 +79,11 @@ async function handleVideo(client, event, platform, apiFunc, platformName) {
     switch (platform) {
       case "douyin":
         caption = `${title}\n\nBy <a href="https://www.douyin.com/user/${result.author.sec_uid}">@${result.author.name}</a>`;
+        if (result.cooperation_info && result.cooperation_info.length > 0) {
+          for (const creator of result.cooperation_info) {
+            caption += ` <a href="https://www.douyin.com/user/${creator.sec_uid}">@${creator.nickname}(${creator.role})</a>`;
+          }
+        }
         break;
       case "kuaishou":
         caption = `${title}\n\nBy <a href="https://www.kuaishou.com/profile/${result.author.uid}">@${result.author.name}</a>`;

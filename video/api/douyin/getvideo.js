@@ -210,22 +210,71 @@ async function getcookies(shareLink) {
   return video_id;
 }
 function buildVideoInfo(data) {
+  // 查找最佳视频质量
+  let bestBitRateIndex = 0;
+  let highestResolution = 0;
+  let hasFPS60 = false;
+
+  if (
+    data.aweme_detail?.video?.bit_rate &&
+    Array.isArray(data.aweme_detail.video.bit_rate) &&
+    data.aweme_detail.video.bit_rate.length > 0
+  ) {
+    for (let i = 0; i < data.aweme_detail.video.bit_rate.length; i++) {
+      const bitRate = data.aweme_detail.video.bit_rate[i];
+      if (
+        bitRate?.FPS === 60 &&
+        bitRate?.play_addr?.url_list &&
+        bitRate.play_addr.url_list.length > 0
+      ) {
+        bestBitRateIndex = i;
+        hasFPS60 = true;
+        const resolution =
+          (bitRate.play_addr.height || 0) * (bitRate.play_addr.width || 0);
+        if (resolution > highestResolution) {
+          highestResolution = resolution;
+          bestBitRateIndex = i;
+        }
+      }
+    }
+
+    if (!hasFPS60) {
+      for (let i = 0; i < data.aweme_detail.video.bit_rate.length; i++) {
+        const bitRate = data.aweme_detail.video.bit_rate[i];
+        if (
+          bitRate?.play_addr?.height &&
+          bitRate?.play_addr?.width &&
+          bitRate?.play_addr?.url_list &&
+          bitRate.play_addr.url_list.length > 0
+        ) {
+          const resolution = bitRate.play_addr.height * bitRate.play_addr.width;
+          if (resolution > highestResolution) {
+            highestResolution = resolution;
+            bestBitRateIndex = i;
+          }
+        }
+      }
+    }
+  }
+
+  const bestBitRate = data.aweme_detail?.video?.bit_rate?.[bestBitRateIndex];
+  const videoUrl =
+    bestBitRate?.play_addr?.url_list &&
+    bestBitRate.play_addr.url_list.length > 0
+      ? bestBitRate.play_addr.url_list[
+          bestBitRate.play_addr.url_list.length - 1
+        ]
+      : null;
+
   const videoInfo = {
     video_id: data.aweme_detail?.aweme_id || null,
     title: data.aweme_detail?.desc || null,
     cover_url: data.aweme_detail?.video?.origin_cover?.url_list?.[0] || null,
     video: {
-      video_url:
-        data.aweme_detail?.video?.bit_rate?.[0]?.play_addr?.url_list &&
-        data.aweme_detail.video.bit_rate[0].play_addr.url_list.length > 0
-          ? data.aweme_detail.video.bit_rate[0].play_addr.url_list[
-              data.aweme_detail.video.bit_rate[0].play_addr.url_list.length - 1
-            ]
-          : null,
-      fps: data.aweme_detail?.video?.bit_rate?.[0]?.FPS || null,
-      height:
-        data.aweme_detail?.video?.bit_rate?.[0]?.play_addr?.height || null,
-      width: data.aweme_detail?.video?.bit_rate?.[0]?.play_addr?.width || null,
+      video_url: videoUrl,
+      fps: bestBitRate?.FPS || null,
+      height: bestBitRate?.play_addr?.height || null,
+      width: bestBitRate?.play_addr?.width || null,
     },
     author: {
       avatar: data.aweme_detail?.author?.avatar_thumb?.url_list?.[0] || null,
@@ -243,6 +292,14 @@ function buildVideoInfo(data) {
       avatar: data.aweme_detail?.music?.avatar_large?.url_list?.[0] || null,
       cover: data.aweme_detail?.music?.cover_hd?.url_list?.[0] || null,
     },
+    cooperation_info:
+      data.aweme_detail?.cooperation_info?.co_creators?.map((creator) => ({
+        avatar: creator?.avatar_thumb?.url_list?.[0] || null,
+        nickname: creator?.nickname || null,
+        role: creator?.role_title || null,
+        uid: creator?.uid || null,
+        sec_uid: creator?.sec_uid || null,
+      })) || [],
   };
   return videoInfo;
 }
