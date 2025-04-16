@@ -15,6 +15,8 @@ async function sendMedia(client, chatId, result, caption) {
       const media = batch.map(
         (imageUrl) => new Api.InputMediaPhotoExternal({ url: imageUrl })
       );
+      console.log(media);
+
       await client.sendFile(chatId, {
         file: media,
         caption: caption,
@@ -84,6 +86,9 @@ async function handleVideo(client, event, platform, apiFunc, platformName) {
             caption += ` <a href="https://www.douyin.com/user/${creator.sec_uid}">@${creator.nickname}(${creator.role})</a>`;
           }
         }
+        if (result.music) {
+          caption += `\nMusic: <a href="https://www.douyin.com/music/${result.music.id_str}">${result.music.name}</a> - <a href="${result.music.url}">预览</a>`;
+        }
         break;
       case "kuaishou":
         caption = `${title}\n\nBy <a href="https://www.kuaishou.com/profile/${result.author.uid}">@${result.author.name}</a>`;
@@ -92,7 +97,7 @@ async function handleVideo(client, event, platform, apiFunc, platformName) {
         caption = `${title}\n\nBy <a href="${url}">@${result.author.name}</a>`;
         break;
     }
-    caption += `\nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
+    caption += `\nvia @${me.username.toLowerCase()}`;
 
     try {
       await sendMedia(client, event.chatId, result, caption, isChannel);

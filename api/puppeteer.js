@@ -104,23 +104,27 @@ const gethtml = async (url, devicey = "desktop") => {
   let browser;
   try {
     browser = await BrowserManager.createBrowser({
+      headless: false, // 设置为非无头模式，使浏览器可见
+      defaultViewport: null, // 禁用默认视口
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
+        "--start-maximized", // 最大化窗口
+        "--window-size=1920,1080", // 设置默认窗口大小
       ],
     });
     const page = await BrowserManager.createPage(browser);
 
     // 设置更长的超时时间和更宽松的等待策略
-    await page.setDefaultNavigationTimeout(60000);
+    await page.setDefaultNavigationTimeout(160000);
     await page.goto(url, {
       waitUntil: ["domcontentloaded", "networkidle2"],
-      timeout: 60000,
+      timeout: 160000,
     });
 
     // 等待页面加载完成
-    await page.waitForSelector("body", { timeout: 60000 });
+    await page.waitForSelector("body", { timeout: 160000 });
     const pageContent = await page.content();
     return pageContent;
   } catch (error) {

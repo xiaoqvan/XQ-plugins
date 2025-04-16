@@ -2,6 +2,7 @@ import { BrowserManager } from "../../../api/browser.js";
 
 export async function getDouYinVideoId(url) {
   const browser = await BrowserManager.createBrowser({
+    headless: true,
     args: [
       "--no-sandbox",
       "--incognito",
@@ -16,7 +17,7 @@ export async function getDouYinVideoId(url) {
   await incognitoPage.setRequestInterception(true);
 
   incognitoPage.on("request", (request) => {
-    if (request.url().includes("www.douyin.com/aweme/v1/web/aweme/detail/")) {
+    if (request.url().includes("/aweme/v1/web/aweme/detail/")) {
       const cookies = request.headers()["cookie"];
       if (cookies && cookies !== "") {
         if (cookies.length > maxLengthCookie.length) {
@@ -28,7 +29,7 @@ export async function getDouYinVideoId(url) {
   });
 
   incognitoPage.on("response", async (response) => {
-    if (response.url().includes("www.douyin.com/aweme/v1/web/aweme/detail/")) {
+    if (response.url().includes("/aweme/v1/web/aweme/detail/")) {
       try {
         const content = await response.text();
         if (content && content !== "") {

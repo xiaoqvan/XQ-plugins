@@ -1,15 +1,13 @@
 import os from "os";
-let puppeteer;
-if (os.platform() === "android") {
-  puppeteer = await import("puppeteer-core");
-} else {
-  puppeteer = await import("puppeteer");
-}
+import puppeteer from "puppeteer-core";
 import { execSync } from "child_process";
 import UserAgent from "user-agents";
 
 let executablePath;
-if (os.platform() === "android") {
+if (os.platform() === "win32") {
+  executablePath =
+    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+} else {
   try {
     executablePath = execSync("which chromium-browser").toString().trim();
     if (!executablePath) {
@@ -27,7 +25,7 @@ class BrowserManager {
       executablePath,
       headless: true,
       args: ["--no-sandbox"],
-      ...options
+      ...options,
     };
 
     return await puppeteer.launch(defaultOptions);
@@ -75,7 +73,7 @@ class BrowserManager {
 
   static async createPage(browser, options = {}) {
     const page = await browser.newPage();
-    
+
     const ua = new UserAgent({
       deviceCategory: options.deviceCategory || "desktop",
       platform: options.platform || "Win32",
