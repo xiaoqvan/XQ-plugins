@@ -124,9 +124,7 @@ export default async function music(client, event) {
                 buffer.length /
                 1024 /
                 1024
-              ).toFixed(
-                2
-              )} MB\nvia @${me.username.toLowerCase()} - <a href="https://github.com/xiaoqvan/XQ-plugins">XQ-plugins</a>`;
+              ).toFixed(2)} MB\nvia @${me.username.toLowerCase()}`;
               const commonMessageOptions = {
                 file: filePath,
                 thumb: coverPath,
